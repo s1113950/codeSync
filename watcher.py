@@ -24,10 +24,10 @@ class ChangeHandler(FileSystemEventHandler):
         # TOOD: might be unnecessary to store conf in dict again
         for section in self.conf.sections():
             local_dir = self.conf.get(section, 'local_dir')
-            self.section_data[local_dir] = {
+            self.section_data.setdefault(local_dir, []).append({
                 'remote_dir': self.conf.get(section, 'remote_dir'),
-                'remote_addr': self.conf.get(section, 'remote_addr')
-            }
+                'remote_addr': self.conf.get(section, 'remote_addr'),
+            })
             self.observer.schedule(self, local_dir, recursive=True)
         self.observer.start()
         try:
@@ -50,19 +50,20 @@ class ChangeHandler(FileSystemEventHandler):
             # match the dir, primitive and probably could change
             if event.src_path.startswith(key):
                 local_dir = key + '/'
-                remote_dir = data['remote_dir']
-                remote_addr = data['remote_addr']
-                # ignore modified events related to the whole dir
-                if event.src_path == local_dir:
-                    return
-        if remote_dir:
-            remote_file_path = "{}:{}".format(remote_addr, remote_dir)
-            exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
-            call_str = "rsync -azv --delete {} {} {}".format(exclude_string, local_dir, remote_file_path)
-            print('Running command: {}'.format(call_str))
-            self.make_subprocess_call(call_str)
-        else:
-            raise ValueError('Not sure where server is at :(')
+                for item in data:
+                    remote_dir = item['remote_dir']
+                    remote_addr = item['remote_addr']
+                    # ignore modified events related to the whole dir
+                    if event.src_path == local_dir:
+                        return
+                    if remote_dir:
+                        remote_file_path = "{}:{}".format(remote_addr, remote_dir)
+                        exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
+                        call_str = "rsync -azvp --delete {} {} {}".format(exclude_string, local_dir, remote_file_path)
+                        print('Running command: {}'.format(call_str))
+                        self.make_subprocess_call(call_str)
+                    else:
+                        raise ValueError('Not sure where server is at :(')
 
 def main():
         ChangeHandler()
