@@ -1,6 +1,5 @@
 To use, create `watcherConfig.txt` that contains entries like:
 
-
     [folder_name]
     local_dir = /your/local/path
     remote_dir = /your/remote/path
