@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import configparser
 import os
 from subprocess import PIPE, Popen
@@ -5,6 +7,11 @@ import time
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+
+class ObjectList(list):
+    """a way to store vars on a list"""
+    pass
 
 
 class ChangeHandler(FileSystemEventHandler):
@@ -18,17 +25,9 @@ class ChangeHandler(FileSystemEventHandler):
         self.conf.read(['watcherConfig.txt'])
 
     def _watch_dirs(self):
+        """sets up the watchdog observer and schedules sections to watch"""
         self.observer = Observer()
-        # dict of dir --> remote_dir mapping
-        self.section_data = {}
-        # TOOD: might be unnecessary to store conf in dict again
-        for section in self.conf.sections():
-            local_dir = self.conf.get(section, 'local_dir')
-            self.section_data.setdefault(local_dir, []).append({
-                'remote_dir': self.conf.get(section, 'remote_dir'),
-                'remote_addr': self.conf.get(section, 'remote_addr'),
-            })
-            self.observer.schedule(self, local_dir, recursive=True)
+        self._schedule_sections()
         self.observer.start()
         try:
             while True:
@@ -37,10 +36,53 @@ class ChangeHandler(FileSystemEventHandler):
             self.observer.stop()
         self.observer.join()
 
+    def _schedule_sections(self):
+        """creates section data dir for later reference
+           and schedules each conf section with the observer
+        """
+        # dict of dir --> remote_dir mapping
+        self.section_data = {}
+        # TOOD: might be unnecessary to store conf in dict again
+        for section in self.conf.sections():
+            local_dir = self.conf.get(section, 'local_dir')
+            self.section_data.setdefault(local_dir, ObjectList()).append({
+                'remote_dir': self.conf.get(section, 'remote_dir'),
+                'remote_addr': self.conf.get(section, 'remote_addr'),
+            })
+            self.observer.schedule(self, local_dir, recursive=True)
+            # last_updated time will be used to prevent oversyncing
+            self.section_data[local_dir].last_updated = 0
+
+    def _should_sync_dir(self, event, key, local_dir):
+        """returns True if dir syncing should happen
+           also updates the last modified time of the folder in the process"""
+        # some files get removed before sync (ie git locks)
+        file_updated_time = os.stat(
+            event.src_path if os.path.exists(event.src_path) else local_dir).st_mtime
+        if file_updated_time > self.section_data[key].last_updated:
+            self.section_data[key].last_updated = file_updated_time
+            return True
+        else:
+            return False
+
+    def _sync_dir(self, data, local_dir):
+        for item in data:
+            remote_dir = item['remote_dir']
+            remote_addr = item['remote_addr']
+            if remote_dir:
+                remote_file_path = "{}:{}".format(remote_addr, remote_dir)
+                exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
+                call_str = "rsync -azvp --delete {} {} {}".format(
+                    exclude_string, local_dir, remote_file_path)
+                print('Running command: {}'.format(call_str))
+                self.make_subprocess_call(call_str)
+            else:
+                raise ValueError('Not sure where server is at :(')
+
     def make_subprocess_call(self, command):
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
         for line in iter(proc.stdout.readline, b''):
-            print(line)
+            print(line, end="")
         proc.communicate()
 
     def on_any_event(self, event):
@@ -50,23 +92,11 @@ class ChangeHandler(FileSystemEventHandler):
             # match the dir, primitive and probably could change
             if event.src_path.startswith(key):
                 local_dir = key + '/'
-                for item in data:
-                    remote_dir = item['remote_dir']
-                    remote_addr = item['remote_addr']
-                    # ignore modified events related to the whole dir
-                    if event.src_path == local_dir:
-                        return
-                    if remote_dir:
-                        remote_file_path = "{}:{}".format(remote_addr, remote_dir)
-                        exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
-                        call_str = "rsync -azvp --delete {} {} {}".format(exclude_string, local_dir, remote_file_path)
-                        print('Running command: {}'.format(call_str))
-                        self.make_subprocess_call(call_str)
-                    else:
-                        raise ValueError('Not sure where server is at :(')
+                if self._should_sync_dir(event, key, local_dir):
+                    self._sync_dir(data, local_dir)
 
 def main():
-        ChangeHandler()
+    ChangeHandler()
 
 if __name__ == '__main__':
     main()
