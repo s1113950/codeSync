@@ -10,6 +10,7 @@ TODO
 
 * Have codeSync create the config files for you
 * Extend makefile commands so that `make` isn't the only one
+* Enable force-sync
 * Sync both ways
 
 Run `make`, which will install the required libraries and start the watcher. It will call `rsync` every time a change to a local_dir is made.
