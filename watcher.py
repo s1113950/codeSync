@@ -45,9 +45,15 @@ class ChangeHandler(FileSystemEventHandler):
         # TOOD: might be unnecessary to store conf in dict again
         for section in self.conf.sections():
             local_dir = self.conf.get(section, 'local_dir')
+            # TODO: I thought a 3rd optional arg was allowed?
+            try:
+                remote_port = self.conf.get(section, 'remote_port')
+            except configparser.NoOptionError:
+                remote_port = None
             self.section_data.setdefault(local_dir, ObjectList()).append({
                 'remote_dir': self.conf.get(section, 'remote_dir'),
                 'remote_addr': self.conf.get(section, 'remote_addr'),
+                'remote_port': remote_port
             })
             self.observer.schedule(self, local_dir, recursive=True)
             # last_updated time will be used to prevent oversyncing
@@ -69,8 +75,12 @@ class ChangeHandler(FileSystemEventHandler):
         for item in data:
             remote_dir = item['remote_dir']
             remote_addr = item['remote_addr']
+            remote_port = item['remote_port']
             if remote_dir:
-                remote_file_path = "{}:{}".format(remote_addr, remote_dir)
+                if remote_port:
+                    remote_file_path = "rsync://{}:{}{}".format(remote_addr, remote_port, remote_dir)
+                else:
+                    remote_file_path = "{}:{}".format(remote_addr, remote_dir)
                 exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
                 call_str = "rsync -azvp --delete {} {} {}".format(
                     exclude_string, local_dir, remote_file_path)

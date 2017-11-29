@@ -4,7 +4,9 @@ To use, create `watcherConfig.txt` that contains entries like:
     local_dir = /your/local/path
     remote_dir = /your/remote/path
     remote_addr = username@server
+    remote_port = {port}
 
+where remote_port is optional
 
 TODO
 
