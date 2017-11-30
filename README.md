@@ -5,8 +5,15 @@ To use, create `watcherConfig.txt` that contains entries like:
     remote_dir = /your/remote/path
     remote_addr = username@server
     remote_port = {port}
+    
+    [project_name]
+    local_dir = /your/local/path
+    remote_dir = /app
+    remote_addr = server
 
-where remote_port is optional
+
+
+where remote_port is optional, and `server` could be an alias set in your ~/.ssh/config
 
 TODO
 
