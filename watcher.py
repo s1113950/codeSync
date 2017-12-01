@@ -82,7 +82,7 @@ class ChangeHandler(FileSystemEventHandler):
                 else:
                     remote_file_path = "{}:{}".format(remote_addr, remote_dir)
                 exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
-                call_str = "rsync -azvp --rsync-path=\"rsync --fake-super\" --delete -e ssh {} {} {}".format(
+                call_str = "rsync -azvp --delete -e ssh {} {} {}".format(
                     exclude_string, local_dir, remote_file_path)
                 print('Running command: {}'.format(call_str))
                 self.make_subprocess_call(call_str)
