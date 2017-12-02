@@ -81,7 +81,7 @@ class ChangeHandler(FileSystemEventHandler):
                     remote_file_path = "rsync://{}:{}{}".format(remote_addr, remote_port, remote_dir)
                 else:
                     remote_file_path = "{}:{}".format(remote_addr, remote_dir)
-                exclude_string = "--include '.venv/src/' --exclude '.venv/*'"
+                exclude_string = "--include '.venv/src/' --exclude '.venv/*' --exclude '*.pyc'"
                 call_str = "rsync -azvp --delete -e ssh {} {} {}".format(
                     exclude_string, local_dir, remote_file_path)
                 print('Running command: {}'.format(call_str))
