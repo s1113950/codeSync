@@ -11,7 +11,15 @@ To use, create `watcherConfig.txt` that contains entries like:
     remote_dir = /app
     remote_addr = server
 
+Additionally, you can set file types to ignore by adding the attribute below:
 
+`ignore_filetypes = .so*`
+
+You can also comma-delimit them to add multiple:
+
+`ignore_filetypes = .so*,.cpp`
+
+This is useful if you have embedded c++ code in your project and the machine you're syncing to isn't the same type of machine as the one you're developing on.
 
 where remote_port is optional, and `server` could be an alias set in your ~/.ssh/config
 
