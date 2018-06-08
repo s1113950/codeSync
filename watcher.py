@@ -56,11 +56,17 @@ class ChangeHandler(FileSystemEventHandler):
                 ignore_filetypes = self.conf.get(section, 'ignore_filetypes')
             except configparser.NoOptionError:
                 ignore_filetypes = ''
+            # adding support for other language syncs; default to python
+            try:
+                language = self.conf.get(section, 'language')
+            except configparser.NoOptionError:
+                language = 'python'
             self.section_data.setdefault(local_dir, ObjectList()).append({
                 'remote_dir': self.conf.get(section, 'remote_dir'),
                 'remote_addr': self.conf.get(section, 'remote_addr'),
                 'remote_port': remote_port,
-                'ignore_filetypes': ignore_filetypes.split(',')
+                'ignore_filetypes': ignore_filetypes.split(','),
+                'language': language
             })
             self.observer.schedule(self, local_dir, recursive=True)
             # last_updated time will be used to prevent oversyncing
@@ -86,6 +92,7 @@ class ChangeHandler(FileSystemEventHandler):
             remote_addr = item['remote_addr']
             remote_port = item['remote_port']
             ignore_filetypes = item['ignore_filetypes']
+            language = item['language']
             if remote_dir:
                 if remote_port:
                     remote_file_path = "rsync://{}:{}{}".format(
@@ -93,7 +100,7 @@ class ChangeHandler(FileSystemEventHandler):
                 else:
                     remote_file_path = "{}:{}".format(remote_addr, remote_dir)
                 include_and_exclude_args = self._get_include_and_exclude_args(
-                    ignore_filetypes)
+                    ignore_filetypes, language)
                 call_str = "rsync -azvp --delete -e ssh {} {} {}".format(
                     include_and_exclude_args, local_dir, remote_file_path)
                 print('Running command: {}'.format(call_str))
@@ -101,15 +108,26 @@ class ChangeHandler(FileSystemEventHandler):
             else:
                 raise ValueError('Not sure where server is at :(')
 
-    def _get_include_and_exclude_args(self, ignore_filetypes):
+    def _get_include_and_exclude_args(self, ignore_filetypes, language):
         """creates the string of files to exclude
            by default includes code in .venv/src and excludes the rest
            of the venv and pyc files
         """
-        args = "--include '.venv/src/' " + \
-            "--exclude '.venv/*' --exclude '*.pyc' "
+        if language == 'python':
+            args = "--include '.venv/src/' " + \
+                "--exclude '.venv/*' --exclude '*.pyc' "
+        elif language == 'c++':
+            args = "--include '*.cpp' "
+        elif language == 'all':
+            args = ''
+        else:
+            raise ValueError('Language {} not supported!'.format(language))
+
         for filetype in ignore_filetypes:
-            args += '--exclude ' + filetype + ' '
+            # TODO: fix
+            # by default we'll have an empty string so handle that here
+            if filetype:
+                args += '--exclude ' + filetype + ' '
         return args
 
     def _make_subprocess_call(self, command):

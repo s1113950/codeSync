@@ -1,4 +1,6 @@
-To use, create `watcherConfig.txt` that contains entries like:
+# Usage
+
+Create `watcherConfig.txt` that contains entries like:
 
     [project_name]
     local_dir = /your/local/path
@@ -9,25 +11,20 @@ To use, create `watcherConfig.txt` that contains entries like:
     [project_name]
     local_dir = /your/local/path
     remote_dir = /app
-    remote_addr = server
+    remote_addr = {username@server|server}
+    languages = {c++|all}
+    ignore_filetypes = {.so*|.so*,.cpp...}
 
-Additionally, you can set file types to ignore by adding the attribute below:
+Language, remote_port, ignore_filetypes are optional
 
-`ignore_filetypes = .so*`
+`ignore_filetypes` is useful if you have embedded c++ code in your project and the machine you're syncing to isn't the same type of machine as the one you're developing on.
 
-You can also comma-delimit them to add multiple:
+The `all` language will sync the entired directory over. By default the language is `python`
 
-`ignore_filetypes = .so*,.cpp`
-
-This is useful if you have embedded c++ code in your project and the machine you're syncing to isn't the same type of machine as the one you're developing on.
-
-where remote_port is optional, and `server` could be an alias set in your ~/.ssh/config
-
-TODO
-
+`server` can be an alias set in your ~/.ssh/config
+## TODO
 * Have codeSync create the config files for you
 * Extend makefile commands so that `make` isn't the only one
 * Enable force-sync
 * Sync both ways
-
 Run `make`, which will install the required libraries and start the watcher. It will call `rsync` every time a change to a local_dir is made.
