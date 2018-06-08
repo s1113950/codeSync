@@ -123,8 +123,10 @@ class ChangeHandler(FileSystemEventHandler):
         """React to any change from any of the dirs from the config"""
         remote_dir = None
         for key, data in self.section_data.items():
-            # match the dir, primitive and probably could change
-            if event.src_path.startswith(key):
+            # match the dir, handle dir names like:
+            # /Users/user/nprof and /Users/user/nprof-cpp not clashing
+            if event.src_path.startswith(key) and \
+                    event.src_path.replace(key, '').startswith('/'):
                 local_dir = key + '/'
                 if self._should_sync_dir(event, key, local_dir):
                     self._sync_dir(data, local_dir)
