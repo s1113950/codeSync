@@ -61,12 +61,18 @@ class ChangeHandler(FileSystemEventHandler):
                 language = self.conf.get(section, 'language')
             except configparser.NoOptionError:
                 language = 'python'
+            # adding support for keeping files even if they don't exist locally
+            try:
+                file_delete = self.conf.get(section, 'file_delete')
+            except configparser.NoOptionError:
+                file_delete = 'True'
             self.section_data.setdefault(local_dir, ObjectList()).append({
                 'remote_dir': self.conf.get(section, 'remote_dir'),
                 'remote_addr': self.conf.get(section, 'remote_addr'),
                 'remote_port': remote_port,
                 'ignore_filetypes': ignore_filetypes.split(','),
-                'language': language
+                'language': language,
+                'file_delete': file_delete == 'True'
             })
             self.observer.schedule(self, local_dir, recursive=True)
             # last_updated time will be used to prevent oversyncing
@@ -88,25 +94,42 @@ class ChangeHandler(FileSystemEventHandler):
     def _sync_dir(self, data, local_dir):
         """Creates the sync command and runs a subprocess call to sync"""
         for item in data:
-            remote_dir = item['remote_dir']
-            remote_addr = item['remote_addr']
-            remote_port = item['remote_port']
-            ignore_filetypes = item['ignore_filetypes']
-            language = item['language']
-            if remote_dir:
-                if remote_port:
-                    remote_file_path = "rsync://{}:{}{}".format(
-                        remote_addr, remote_port, remote_dir)
-                else:
-                    remote_file_path = "{}:{}".format(remote_addr, remote_dir)
-                include_and_exclude_args = self._get_include_and_exclude_args(
-                    ignore_filetypes, language)
-                call_str = "rsync -azvp --delete -e ssh {} {} {}".format(
-                    include_and_exclude_args, local_dir, remote_file_path)
+            if item['remote_dir']:
+                call_str = self._gen_call_str(item, local_dir)
                 print('Running command: {}'.format(call_str))
                 self._make_subprocess_call(call_str)
             else:
                 raise ValueError('Not sure where server is at :(')
+
+    def _gen_remote_file_path(self, remote_addr, remote_port, remote_dir):
+        """generates an rsync string file path"""
+        if remote_port:
+            remote_file_path = "rsync://{}:{}{}".format(
+                remote_addr, remote_port, remote_dir)
+        else:
+            remote_file_path = "{}:{}".format(remote_addr, remote_dir)
+        return remote_file_path
+
+    def _gen_call_str(self, item, local_dir):
+        """generates the full rsync call string"""
+        remote_dir = item['remote_dir']
+        remote_addr = item['remote_addr']
+        remote_port = item['remote_port']
+        ignore_filetypes = item['ignore_filetypes']
+        language = item['language']
+        file_delete = item['file_delete']
+
+        remote_file_path = self._gen_remote_file_path(
+            remote_addr, remote_port, remote_dir)
+        include_and_exclude_args = self._get_include_and_exclude_args(
+            ignore_filetypes, language)
+
+        call_str = "rsync -azvp "
+        if file_delete:
+            call_str += '--delete '
+        call_str += "-e ssh {} {} {}".format(
+            include_and_exclude_args, local_dir, remote_file_path)
+        return call_str
 
     def _get_include_and_exclude_args(self, ignore_filetypes, language):
         """creates the string of files to exclude
