@@ -1,2 +1,0 @@
-configparser==3.5.0
-watchdog==0.8.3
