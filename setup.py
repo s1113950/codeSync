@@ -4,21 +4,21 @@ import versioneer
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup(name='codesync',
+setup(name='csync',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
       description='Syncs code to machines on code changes',
       long_description=long_description,
       long_description_content_type="text/markdown",
       author='Steven Robertson',
-      url='https://github.com/s1113950/codeSync.git',
+      url='https://github.com/s1113950/csync.git',
       packages=find_packages(exclude=["tests"]),
       install_requires=[
           "configparser==3.5.0",
           "watchdog==0.8.3"
       ],
       entry_points={
-          'console_scripts': ['codesync=codesync.watcher:main']
+          'console_scripts': ['csync=csync.watcher:main']
       },
       package_data={
       },

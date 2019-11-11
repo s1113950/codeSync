@@ -26,7 +26,7 @@ install:
 	@python3 setup.py install
 
 uninstall:
-	@pip3 uninstall -y codesync
+	@pip3 uninstall -y csync
 
 clean:
 	rm -rf .tox/venv
@@ -36,4 +36,4 @@ dist: dev
 	.tox/venv/bin/pip wheel --wheel-dir=dist .
 
 release: dist
-	. .tox/venv/bin/activate && twine upload dist/codesync* ; deactivate
+	. .tox/venv/bin/activate && twine upload dist/csync* ; deactivate
