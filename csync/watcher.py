@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import configparser
 import os
 from subprocess import PIPE, Popen
@@ -137,8 +135,8 @@ class ChangeHandler(FileSystemEventHandler):
            of the venv and pyc files
         """
         if language == 'python':
-            args = "--include '.venv/src/' " + \
-                "--exclude '.venv/*' --exclude '*.pyc' "
+            args = "--include '.venv3/src/' " + \
+                "--exclude '.venv3/*' --exclude '.tox/*' --exclude '*.pyc' "
         elif language == 'c++':
             args = "--include '*.cpp' "
         elif language == 'all':
@@ -175,7 +173,3 @@ class ChangeHandler(FileSystemEventHandler):
 
 def main():
     ChangeHandler()
-
-
-if __name__ == '__main__':
-    main()
