@@ -26,7 +26,11 @@ The `all` language will sync the entired directory over. By default the language
 
 `server` can be an alias set in your `~/.ssh/config`
 
-Run `make`, which will install the required libraries and start the watcher. It will call `rsync` every time a change to a local_dir is made.
+`cysnc` uses `rsync` every time a change to a local_dir is made.
+
+## Installation
+
+`pip install csync`
 
 ## TODO
 * Have codeSync create the config files for you
