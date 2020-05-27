@@ -21,7 +21,7 @@ class ChangeHandler(FileSystemEventHandler):
     def _load_config(self):
         """loads self.conf from watcherConfig.txt"""
         self.conf = configparser.SafeConfigParser()
-        self.conf.read(['watcherConfig.txt'])
+        self.conf.read([os.environ['CSYNC_CONFIG']])
 
     def _watch_dirs(self):
         """sets up the watchdog observer and schedules sections to watch"""

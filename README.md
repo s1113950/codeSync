@@ -12,9 +12,11 @@ Create `watcherConfig.txt` that contains entries like:
     local_dir = /your/local/path
     remote_dir = /app
     remote_addr = {username@server|server}
-    languages = {c++|all}
+    languages = {c++|python|all}
     ignore_filetypes = {.so*|.so*,.cpp...}
     file_delete = {True|False}
+and set the CSYNC_CONFIG env var to point to this file.
+
 
 Language, remote_port, ignore_filetypes are optional
 
@@ -28,7 +30,7 @@ The `all` language will sync the entired directory over. By default the language
 
 `cysnc` uses `rsync` every time a change to a local_dir is made.
 
-## Installation
+## Installation (old, haven't updated in a bit)
 
 `pip install csync`
 
