@@ -12,7 +12,7 @@ Create `watcherConfig.txt` that contains entries like:
     local_dir = /your/local/path
     remote_dir = /app
     remote_addr = {username@server|server}
-    languages = {c++|python|all}
+    language = {c++|python|all}
     ignore_filetypes = {.so*|.so*,.cpp...}
     file_delete = {True|False}
 and set the CSYNC_CONFIG env var to point to this file.
